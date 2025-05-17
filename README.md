@@ -1,0 +1,2 @@
+# GeraR
+Gerador de relatórios 
