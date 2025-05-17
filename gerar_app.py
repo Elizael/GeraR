@@ -4,7 +4,6 @@ import zipfile
 import io
 from datetime import datetime
 from docx import Document
-import os
 
 st.set_page_config(page_title="GeraR – EC Serviços", layout="centered")
 
@@ -22,6 +21,15 @@ def normalizar_texto(txt):
 
 def primeira_maiuscula(txt):
     return txt.capitalize() if isinstance(txt, str) else ""
+
+def substituir_placeholder_em_paragrafos(paragraphs, marcador, valor):
+    for paragraph in paragraphs:
+        texto_completo = ''.join(run.text for run in paragraph.runs)
+        if marcador in texto_completo:
+            novo_texto = texto_completo.replace(marcador, valor)
+            for run in paragraph.runs:
+                run.text = ""
+            paragraph.runs[0].text = novo_texto
 
 def consolidar_dados(planilhas):
     consolidado = []
@@ -63,12 +71,8 @@ if uploaded_modelo and uploaded_planilhas:
         with zipfile.ZipFile(zip_buffer, "w") as zf:
             for loc, itens in agrupado.items():
                 doc = Document(uploaded_modelo)
-                for p in doc.paragraphs:
-                    if "<<localidade>>" in p.text:
-                        p.text = p.text.replace("<<localidade>>", loc.title())
-                    if "<<datadaemissao>>" in p.text:
-                        hoje = datetime.now().strftime("%d de %B de %Y")
-                        p.text = p.text.replace("<<datadaemissao>>", hoje)
+                substituir_placeholder_em_paragrafos(doc.paragraphs, "<<localidade>>", loc.title())
+                substituir_placeholder_em_paragrafos(doc.paragraphs, "<<datadaemissao>>", datetime.now().strftime("%d de %B de %Y"))
 
                 tabela = doc.tables[0]
                 base = tabela.rows[2]
